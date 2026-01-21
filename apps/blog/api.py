@@ -12,9 +12,74 @@ from ninja.errors import HttpError
 from utils.auth import AuthBearer, OptionalAuthBearer, get_current_user
 from apps.users.models import UserRole
 from .models import Post, PostStatus
-from .schemas import PostOut, PostDetailOut, PostCreateIn, PostUpdateIn
+from .schemas import PostOut, PostDetailOut, PostCreateIn, PostUpdateIn, AuthorOut
 
 router = Router()
+
+
+def parse_tags(tags) -> list[str]:
+    """Parse tags field - handles both list and comma-separated string."""
+    if tags is None:
+        return []
+    if isinstance(tags, list):
+        return tags
+    if isinstance(tags, str):
+        return [t.strip() for t in tags.split(",") if t.strip()]
+    return []
+
+
+def post_to_out(post: Post) -> PostOut:
+    """Convert Post model to PostOut schema."""
+    author = None
+    if post.author:
+        author = AuthorOut(id=post.author.id, name=post.author.name, email=post.author.email)
+
+    return PostOut(
+        id=post.id,
+        title=post.title,
+        slug=post.slug,
+        excerpt=post.excerpt,
+        coverImage=post.cover_image,
+        status=post.status,
+        tags=parse_tags(post.tags),
+        category=post.category,
+        isFeatured=post.is_featured,
+        readingTime=post.reading_time,
+        viewCount=post.view_count,
+        authorId=post.author_id,
+        author=author,
+        publishedAt=post.published_at,
+        createdAt=post.created_at,
+        updatedAt=post.updated_at,
+    )
+
+
+def post_to_detail(post: Post) -> PostDetailOut:
+    """Convert Post model to PostDetailOut schema."""
+    author = None
+    if post.author:
+        author = AuthorOut(id=post.author.id, name=post.author.name, email=post.author.email)
+
+    return PostDetailOut(
+        id=post.id,
+        title=post.title,
+        slug=post.slug,
+        excerpt=post.excerpt,
+        coverImage=post.cover_image,
+        status=post.status,
+        tags=parse_tags(post.tags),
+        category=post.category,
+        isFeatured=post.is_featured,
+        readingTime=post.reading_time,
+        viewCount=post.view_count,
+        authorId=post.author_id,
+        author=author,
+        publishedAt=post.published_at,
+        createdAt=post.created_at,
+        updatedAt=post.updated_at,
+        blocks=post.blocks or [],
+        seoMeta=post.seo_meta,
+    )
 
 
 def slugify(text: str) -> str:
@@ -42,15 +107,15 @@ def list_posts(
     if featured is not None:
         queryset = queryset.filter(is_featured=featured)
 
-    posts = queryset.order_by("-published_at")[offset : offset + limit]
-    return list(posts)
+    posts = queryset.select_related("author").order_by("-published_at")[offset : offset + limit]
+    return [post_to_out(p) for p in posts]
 
 
 @router.get("/{slug}", response=PostDetailOut)
 def get_post(request: HttpRequest, slug: str):
     """Get a post by slug."""
     try:
-        post = Post.objects.get(slug=slug)
+        post = Post.objects.select_related("author").get(slug=slug)
     except Post.DoesNotExist:
         raise HttpError(404, "Post not found")
 
@@ -58,7 +123,7 @@ def get_post(request: HttpRequest, slug: str):
     post.view_count += 1
     post.save(update_fields=["view_count"])
 
-    return post
+    return post_to_detail(post)
 
 
 @router.post("/", response=PostDetailOut, auth=AuthBearer())
@@ -99,7 +164,7 @@ def create_post(request: HttpRequest, data: PostCreateIn):
         published_at=datetime.now(timezone.utc) if data.status == "published" else None,
     )
 
-    return post
+    return post_to_detail(post)
 
 
 @router.put("/{post_id}", response=PostDetailOut, auth=AuthBearer())
@@ -111,7 +176,7 @@ def update_post(request: HttpRequest, post_id: str, data: PostUpdateIn):
         raise HttpError(403, "Admin access required")
 
     try:
-        post = Post.objects.get(id=post_id)
+        post = Post.objects.select_related("author").get(id=post_id)
     except Post.DoesNotExist:
         raise HttpError(404, "Post not found")
 
@@ -147,7 +212,7 @@ def update_post(request: HttpRequest, post_id: str, data: PostUpdateIn):
         post.is_featured = data.is_featured
 
     post.save()
-    return post
+    return post_to_detail(post)
 
 
 @router.delete("/{post_id}", auth=AuthBearer())
