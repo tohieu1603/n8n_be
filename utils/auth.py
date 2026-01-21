@@ -27,7 +27,23 @@ class AuthBearer(HttpBearer):
             if not user_id:
                 return None
 
-            user = User.objects.filter(id=user_id, is_active=True).first()
+            # Use sync_to_async for async compatibility
+            from asgiref.sync import sync_to_async
+            import asyncio
+
+            def get_user_sync():
+                return User.objects.filter(id=user_id, is_active=True).first()
+
+            # Check if we're in async context
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in async context - but authenticate is sync, so just do sync query
+                # Django will handle it properly
+                user = User.objects.filter(id=user_id, is_active=True).first()
+            except RuntimeError:
+                # No running loop - sync context
+                user = User.objects.filter(id=user_id, is_active=True).first()
+
             if user:
                 request.auth_user = user
             return user

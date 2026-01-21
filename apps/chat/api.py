@@ -225,18 +225,21 @@ async def chat(request: HttpRequest, data: ChatIn):
 
 
 @router.post("/stream")
-async def chat_stream(request: HttpRequest, data: ChatIn):
+def chat_stream(request: HttpRequest, data: ChatIn):
     """Stream chat response using KIE API."""
+    import asyncio
+    from asgiref.sync import async_to_sync
+
     user = get_current_user(request)
 
     # Build messages for KIE API
     api_messages = build_kie_messages(data.messages, data.systemPrompt, data.imageUrl)
 
-    # Get or create conversation
+    # Get or create conversation (sync)
     conversation = None
     if data.conversationId:
         try:
-            conversation = await ChatConversation.objects.aget(
+            conversation = ChatConversation.objects.get(
                 id=data.conversationId, user=user
             )
         except ChatConversation.DoesNotExist:
@@ -244,7 +247,7 @@ async def chat_stream(request: HttpRequest, data: ChatIn):
 
     if not conversation:
         last_msg = data.messages[-1].content if data.messages else "New Chat"
-        conversation = await ChatConversation.objects.acreate(
+        conversation = ChatConversation.objects.create(
             user=user,
             title=last_msg[:50] if len(last_msg) > 50 else last_msg,
             agent_id=data.agentId or "general_base",
@@ -252,19 +255,20 @@ async def chat_stream(request: HttpRequest, data: ChatIn):
 
     # Save user message
     if data.messages:
-        await ChatMessage.objects.acreate(
+        ChatMessage.objects.create(
             conversation=conversation,
             role=MessageRole.USER,
             content=data.messages[-1].content,
         )
 
-    async def generate():
+    def generate():
         full_response = ""
         total_tokens = 0
 
         try:
-            async with httpx.AsyncClient() as client:
-                async with client.stream(
+            # Use sync httpx for streaming
+            with httpx.Client() as client:
+                with client.stream(
                     "POST",
                     KIE_API_URL,
                     headers={
@@ -277,7 +281,7 @@ async def chat_stream(request: HttpRequest, data: ChatIn):
                     },
                     timeout=120.0,
                 ) as response:
-                    async for line in response.aiter_lines():
+                    for line in response.iter_lines():
                         if line.startswith("data: "):
                             data_str = line[6:]
                             if data_str == "[DONE]":
@@ -300,7 +304,7 @@ async def chat_stream(request: HttpRequest, data: ChatIn):
                 total_tokens = len(full_response) // 4 + len(str(api_messages)) // 4
 
             # Save assistant message
-            await ChatMessage.objects.acreate(
+            ChatMessage.objects.create(
                 conversation=conversation,
                 role=MessageRole.ASSISTANT,
                 content=full_response,
@@ -310,7 +314,7 @@ async def chat_stream(request: HttpRequest, data: ChatIn):
             # Update user credits
             if total_tokens:
                 user.token_balance -= total_tokens // 10
-                await user.asave()
+                user.save()
 
             yield f"data: {json.dumps({'done': True, 'conversationId': str(conversation.id), 'usage': {'estimatedTokens': total_tokens, 'cost': total_tokens * 0.00001}})}\n\n"
 
