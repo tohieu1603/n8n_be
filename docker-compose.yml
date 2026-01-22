@@ -7,11 +7,11 @@ services:
       - "4000:4000"
     environment:
       - DEBUG=false
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_DATABASE=imagegen
-      - DB_USERNAME=imagegen
-      - DB_PASSWORD=imagegen123
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:-imagegen}
+      - DB_USERNAME=${DB_USERNAME:-imagegen}
+      - DB_PASSWORD=${DB_PASSWORD:-imagegen123}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key}
       - JWT_SECRET=${JWT_SECRET:-your-jwt-secret}
       - API_KEY_PEPPER=${API_KEY_PEPPER:-your-api-key-pepper}
@@ -19,22 +19,6 @@ services:
       - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - SEPAY_API_KEY=${SEPAY_API_KEY}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:3001
-    depends_on:
-      - db
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
     restart: unless-stopped
-
-  db:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_DB=imagegen
-      - POSTGRES_USER=imagegen
-      - POSTGRES_PASSWORD=imagegen123
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
