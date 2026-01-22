@@ -88,6 +88,7 @@ from apps.blog.api import router as blog_router
 from apps.generate.api import router as generate_router
 from apps.convert.api import router as convert_router
 from apps.admin.api import router as admin_router
+from apps.workflow.api import router as workflow_router
 
 api.add_router("/auth", auth_router, tags=["Auth"])
 api.add_router("/users", users_router, tags=["Users"])
@@ -99,3 +100,4 @@ api.add_router("/blog", blog_router, tags=["Blog"])
 api.add_router("/generate", generate_router, tags=["Generate"])
 api.add_router("/convert", convert_router, tags=["Convert"])
 api.add_router("/admin", admin_router, tags=["Admin"])
+api.add_router("/workflow", workflow_router, tags=["Workflow"])

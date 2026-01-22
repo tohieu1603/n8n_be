@@ -1,4 +1,7 @@
+# Environment variables (contains secrets)
 .env
+.env.local
+.env.*.local
 
 # Python
 __pycache__/
@@ -7,6 +10,9 @@ __pycache__/
 *.so
 .Python
 venv/
+.venv/
+env/
+ENV/
 *.pyc
 *.pyo
 *.pyd
@@ -16,17 +22,43 @@ venv/
 .vscode/
 *.swp
 *.swo
+*.suo
+*.user
 
 # Django
 *.log
 db.sqlite3
+db.sqlite3-journal
 media/
 staticfiles/
+static/
 
 # Test
 .pytest_cache/
 .coverage
 htmlcov/
+.tox/
+.cache/
 
-# Misc
+# Temporary files
+latest_response.txt
+*.tmp
+*.temp
+*.bak
+
+# OS
 .DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Node modules (nếu có frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.eggs/

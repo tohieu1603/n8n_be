@@ -62,12 +62,10 @@ class ChatMessageIn(Schema):
 
 
 class ChatIn(Schema):
-    """Chat request input - matches frontend format."""
+    """Chat request input - simplified, system prompt managed by backend."""
 
     messages: list[ChatMessageIn]
-    agentId: str | None = None
     imageUrl: str | None = None
-    systemPrompt: str | None = None
     conversationId: str | None = None
 
 

@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.generate",
     "apps.convert",
     "apps.admin",
+    "apps.workflow",
 ]
 
 MIDDLEWARE = [
@@ -94,6 +95,22 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 KIE_API_KEY = os.getenv("KIE_API_KEY", "")
 SEPAY_API_KEY = os.getenv("SEPAY_API_KEY", "")
 
+# DeepSeek API
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEEPSEEK_API_URL = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+
+# LLM Provider selection: "kie" or "deepseek"
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "kie")
+
+# n8n Workflow Automation
+N8N_URL = os.getenv("N8N_URL", "http://localhost:5678")
+N8N_API_KEY = os.getenv("N8N_API_KEY", "")
+
+# MCP (Model Context Protocol) Configuration
+MCP_SERVER_COMMAND = os.getenv("MCP_SERVER_COMMAND", "npx -y n8n-mcp").split()
+MCP_ENABLED = os.getenv("MCP_ENABLED", "true").lower() == "true"
+
 # Google OAuth
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
@@ -141,6 +158,22 @@ LOGGING = {
         "django": {
             "handlers": ["console"],
             "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        # MCP and tool calling debug logging
+        "agents.mcp": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "agents.tools": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "apps.chat": {
+            "handlers": ["console"],
+            "level": "DEBUG",
             "propagate": False,
         },
     },
