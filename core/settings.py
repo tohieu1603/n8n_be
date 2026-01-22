@@ -104,7 +104,8 @@ DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "kie")
 
 # n8n Workflow Automation
-N8N_URL = os.getenv("N8N_URL", "http://localhost:5678")
+N8N_URL = os.getenv("N8N_URL", "http://localhost:5678")  # Internal API calls
+N8N_PUBLIC_URL = os.getenv("N8N_PUBLIC_URL", os.getenv("N8N_URL", "http://localhost:5678"))  # Public URL for frontend
 N8N_API_KEY = os.getenv("N8N_API_KEY", "")
 
 # MCP (Model Context Protocol) Configuration

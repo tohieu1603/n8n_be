@@ -21,4 +21,6 @@ services:
       - SEPAY_API_KEY=${SEPAY_API_KEY}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      - N8N_URL=${N8N_URL:-http://localhost:5678}
+      - N8N_API_KEY=${N8N_API_KEY}
     restart: unless-stopped

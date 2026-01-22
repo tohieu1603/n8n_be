@@ -17,7 +17,8 @@ router = Router(auth=AuthBearer())
 def get_n8n_config():
     """Get n8n configuration from settings."""
     return {
-        "url": getattr(settings, "N8N_URL", "http://localhost:5678"),
+        "url": getattr(settings, "N8N_URL", "http://localhost:5678"),  # Internal API calls
+        "public_url": getattr(settings, "N8N_PUBLIC_URL", getattr(settings, "N8N_URL", "http://localhost:5678")),  # Public URL for frontend
         "api_key": getattr(settings, "N8N_API_KEY", ""),
     }
 
@@ -94,7 +95,7 @@ async def create_workflow(request: HttpRequest, data: CreateWorkflowIn):
             return WorkflowOut(
                 success=True,
                 workflowId=workflow_id,
-                workflowUrl=f"{config['url']}/workflow/{workflow_id}"
+                workflowUrl=f"{config['public_url']}/workflow/{workflow_id}"
             )
         else:
             error_text = response.text
@@ -125,11 +126,11 @@ def get_workflow_config(request: HttpRequest):
     """
     Get n8n configuration for frontend.
 
-    Returns the n8n URL so frontend can display iframe.
+    Returns the public n8n URL so frontend can display iframe.
     """
     config = get_n8n_config()
 
     return {
-        "n8nUrl": config["url"],
+        "n8nUrl": config["public_url"],  # Use public URL for frontend
         "configured": bool(config["api_key"])
     }
